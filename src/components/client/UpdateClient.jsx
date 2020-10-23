@@ -1,23 +1,25 @@
 import React, {useState, useEffect} from 'react'
-import { useParams } from 'react-router-dom';
+import { useParams, useHistory } from 'react-router-dom';
 
-export const UpdateProduct = props => {
-    const productId = useParams().productId;
+export const UpdateClient = props => {
+    const clientId = useParams().clientId;
     
     const [formData, setFormData] = useState({
         name: '',
-        price: ''
+        email: '',
+        tel: '',
+        address: ''
     });
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState([]);
-    const { name, price } = formData;
+    const { name, email, tel, address } = formData;
 
 
     useEffect(() => {
-        const fetchProduct = async () => {
+        const fetchClient = async () => {
           try {
             const response = await fetch(
-              `${process.env.REACT_APP_BACKEND_URL}/api/product/${productId}`,
+              `${process.env.REACT_APP_BACKEND_URL}/api/client/${clientId}`,
               {
                 headers: {
                     'Content-Type': 'application/json',
@@ -30,7 +32,9 @@ export const UpdateProduct = props => {
             setFormData(
               {
                 name: responseData.name,
-                price: Number(responseData.price ).toLocaleString('pt-BR')
+                email: responseData.email,
+                tel: responseData.tel,
+                address: responseData.address
               }
             );
     
@@ -38,32 +42,32 @@ export const UpdateProduct = props => {
               console.error(err)
           }
         };
-        fetchProduct();
-      }, []);
+        fetchClient();
+      }, [clientId, setFormData]);
 
     const onChange = e => setFormData({...formData, [e.target.name]: e.target.value})
 
     const onSubmit = async e => {
         e.preventDefault();
         setError(oldError => []);
-        const updateProductData = {
-            name,
-            price
+        const updateClientData = {
+            ...formData
         }
         try {
             setIsLoading(true)
             const response = await fetch(process.env.REACT_APP_BACKEND_URL + 
-                '/api/product/' +  productId,
+                '/api/client/' +  clientId,
                 {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'x-auth-token': localStorage.getItem('token')
                 },
-                body: JSON.stringify(updateProductData)
+                body: JSON.stringify(updateClientData)
                 }
             )
             const responseData = await response.json();
+            console.log(responseData);
             if(!response.ok){
                 var errors = []
                 responseData.errors.forEach(element => {
@@ -73,7 +77,7 @@ export const UpdateProduct = props => {
                 setIsLoading(false);
             } else {
                 setIsLoading(false);
-                props.history.push('/products');
+                props.history.push('/clients');
             }
 
         } catch (err) {
@@ -84,6 +88,7 @@ export const UpdateProduct = props => {
         }
     }
     const ErrElements = props => {
+        //console.log(props.errors)
         return (props.errors.map((err, index) => 
                 <p key={index} style={{color: 'red'}}>{err}</p>)
         );
@@ -91,26 +96,36 @@ export const UpdateProduct = props => {
 
     return (
         <section className="container">
-            <h1 className="large text-primary">Update Product</h1>
+            <h1 className="large text-primary">Update Client</h1>
             <ErrElements errors = {error} />
             <form className="form" onSubmit={e => onSubmit(e)}>
                 <div className="form-group">
-                <input type="text" placeholder="Product Name" name="name"
+                <input type="text" placeholder="Client Name" name="name"
                     value={name} 
                     onChange={e => onChange(e)} />
                 </div>
                 <div className="form-group">
-                <input type="text" placeholder="Product Price" name="price"
-                    value={price} 
+                <input type="text" placeholder="Client email" name="email"
+                    value={email} 
+                    onChange={e => onChange(e)} />
+                </div>
+                <div className="form-group">
+                <input type="text" placeholder="Client tel" name="tel"
+                    value={tel} 
+                    onChange={e => onChange(e)} />
+                </div>
+                <div className="form-group">
+                <input type="text" placeholder="Client address" name="address"
+                    value={address} 
                     onChange={e => onChange(e)} />
                 </div>
                 <input type="submit" className="btn btn-primary" value="Update" />
                 <button type="submit" className="btn btn-primary"
-                onClick={() => props.history.push('/products')}>Cancel</button>
+                onClick={() => props.history.push('/clients')}>Cancel</button>
             </form>
             
         </section>
     )
 }
 
-export default UpdateProduct;
+export default UpdateClient;

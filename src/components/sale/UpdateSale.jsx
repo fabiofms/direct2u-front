@@ -1,68 +1,150 @@
 import React, {useState, useEffect} from 'react'
-import { useParams, useHistory } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import ProductsList from './ProductsList'
 
-export const UpdateProduct = props => {
-    const productId = useParams().productId;
-    
-    const [formData, setFormData] = useState({
-        name: '',
-        type: ''
-    });
-    const [isLoading, setIsLoading] = useState(false)
+
+export const UpdateSale = props => {
+    const saleId = useParams().saleId;
+
+    const [products, setProducts] = useState(); // products from database
+    const [selectedProducts, setSelectedProducts] = useState([]);
+    const [clients, setClients] = useState(); // clients from database
+    const [client, setClient] = useState();
     const [error, setError] = useState([]);
-    const { name, type } = formData;
+    const [isLoading, setIsLoading] = useState(false)
+    const [formProduct, setFormProduct] = useState({
+        quantity: '',
+        product: ''
+    });
 
+    const { quantity, product } = formProduct
 
+    // Get products for user
     useEffect(() => {
-        const fetchProduct = async () => {
-          try {
-            const response = await fetch(
-              `${process.env.REACT_APP_BACKEND_URL}/api/product/${productId}`,
-              {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-auth-token': localStorage.getItem('token')
-                }
-              }
-            );
-            const responseData = await response.json()
-            //setLoadedPlace(responseData.place);
-            setFormData(
-              {
-                name: responseData.name,
-                type: responseData.type 
-              }
-            );
+        const sendRequestProducts = async () => {
+            setIsLoading(true);
+            try {
+                const response = await fetch(
+                    process.env.REACT_APP_BACKEND_URL + '/api/product',
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-auth-token': localStorage.getItem('token')
+                        }
+                    }
+                );
+                
     
-          } catch (err) {}
+                const responseData = await response.json();
+                
+                if(!response.ok) {
+                    throw new Error(responseData.msg)
+                }
+                
+                setProducts(() => responseData);
+                if ( responseData.length > 0){
+                    setFormProduct(old => {return {...old, product: responseData[0]._id}})
+                }
+                setIsLoading(false);
+
+                // Set Selected products
+
+                const saleResponse = await fetch(
+                    `${process.env.REACT_APP_BACKEND_URL}/api/sale/${saleId}`,
+                    {
+                      headers: {
+                          'Content-Type': 'application/json',
+                          'x-auth-token': localStorage.getItem('token')
+                      }
+                    }
+                  );
+                  const saleResponseData = await saleResponse.json()
+                  
+                  let populatedProducts = []
+                  saleResponseData.products.forEach( product =>{
+                    const name = responseData.filter(
+                        p => p._id === product.product
+                    )[0].name
+                    populatedProducts.push({...product, name})
+                  });
+
+                  setSelectedProducts(old => {return [...old, ...populatedProducts]});
+                  
+                  console.log(responseData)
+
+                  setClient(saleResponseData.client)
+
+            } catch (err) {
+                setIsLoading(false);
+                setError(old => old.concat(err.message));
+            }
+            
         };
-        fetchProduct();
-      }, [productId, setFormData]);
 
-    const onChange = e => setFormData({...formData, [e.target.name]: e.target.value})
+        const sendRequestClients = async () => {
+            setIsLoading(true);
+            try {
+                const response = await fetch(
+                    process.env.REACT_APP_BACKEND_URL + '/api/client',
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-auth-token': localStorage.getItem('token')
+                        }
+                    }
+                );
+    
+                const responseData = await response.json();
+                
+                if(!response.ok) {
+                    throw new Error(responseData.msg)
+                }
+                
+                setClients(() => responseData);
+                if ( responseData.length > 0){
+                    setClient(responseData[0]._id)
+                }
+                setIsLoading(false);
+            } catch (err) {
+                setIsLoading(false);
+                setError(oldError => oldError.concat(err.message));
+            }
+            
+        };
 
-    const onSubmit = async e => {
+        sendRequestProducts();
+        sendRequestClients();
+    }, [])
+
+
+    const onChangeClient = e => setClient(e.target.value)
+
+    const onChangeProduct = e => {
+        setFormProduct({...formProduct, [e.target.name]: e.target.value})
+    }
+
+    const onSubmitSale = async e => {
         e.preventDefault();
         setError(oldError => []);
-        const updateProductData = {
-            name,
-            type
+        const newSaleData = {
+            client, products: selectedProducts
         }
         try {
             setIsLoading(true)
-            const response = await fetch(process.env.REACT_APP_BACKEND_URL + 
-                '/api/product/' +  productId,
+            const response = await fetch(process.env.REACT_APP_BACKEND_URL +
+                '/api/sale/' + saleId,
                 {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'x-auth-token': localStorage.getItem('token')
                 },
-                body: JSON.stringify(updateProductData)
+                body: JSON.stringify(newSaleData)
                 }
             )
             const responseData = await response.json();
-            console.log(responseData);
             if(!response.ok){
                 var errors = []
                 responseData.errors.forEach(element => {
@@ -72,7 +154,7 @@ export const UpdateProduct = props => {
                 setIsLoading(false);
             } else {
                 setIsLoading(false);
-                props.history.push('/products');
+                props.history.push('/sales');
             }
 
         } catch (err) {
@@ -82,32 +164,78 @@ export const UpdateProduct = props => {
                 || 'Something went wrong, please try again'])
         }
     }
+
+    const onSubmitProduct = e => {
+        e.preventDefault()
+        const selectedName = products.filter(
+            prod => prod._id === product
+        )[0].name
+        const newProductData = {...formProduct, name: selectedName}
+        setSelectedProducts(old => [...old, newProductData])
+        setFormProduct(old => {return {...old, quantity: 0}})
+    }
+
+    const onDeleteHandler = id => {
+        setSelectedProducts(old => old.filter(prod => id !== prod.product))
+    }
+
     const ErrElements = props => {
-        //console.log(props.errors)
         return (props.errors.map((err, index) => 
                 <p key={index} style={{color: 'red'}}>{err}</p>)
         );
     }
 
     return (
-        <section class="container">
-            <h1 className="large text-primary">Add New Product</h1>
+        <section className="container">
+            <h1 className="large text-primary">Update Sale</h1>
             <ErrElements errors = {error} />
-            <form className="form" onSubmit={e => onSubmit(e)}>
-                <div className="form-group">
-                <input type="text" placeholder="Product Name" name="name"
-                    value={name} 
-                    onChange={e => onChange(e)} />
-                </div>
-                <div className="form-group">
-                <input type="text" placeholder="Product Type" name="type"
-                    value={type} 
-                    onChange={e => onChange(e)} />
-                </div>
-                <input type="submit" className="btn btn-primary" value="Update" />
+
+            <form className="form" onSubmit={e => onSubmitSale(e)}>
+                <input type="submit" className="btn btn-green" value="Update Sale" />
+                <button type="submit" className="btn btn-primary"
+                onClick={() => props.history.push('/sales')}>Cancel</button>
+                <p className="lead text-dark">Choose a Client:</p>
+                    {clients && client && <select
+                        name="client"
+                        value={client} 
+                        onChange={e => onChangeClient(e)}>
+                    {clients.map( client => {
+                        return (<option 
+                            key={client._id} 
+                            value={client._id}>
+                            {client.name}
+                        </option>)
+                    })}
+                </select>}
             </form>
+
+            <form className="form" onSubmit={e => {onSubmitProduct(e)}}>
+                <p className="lead text-dark">Choose a Product:</p>
+                    {products && <select
+                        name="product"
+                        value={product} 
+                        onChange={e => onChangeProduct(e)}>
+                    {products.map( product => {
+                        return (<option 
+                            key={product._id} 
+                            value={product._id}>
+                            {product.name}
+                        </option>)
+                    })}
+                </select>}
+                <div className="form-group">
+                <input type="text" placeholder="Quantity" name="quantity"
+                    value={quantity}
+                    onChange={e => onChangeProduct(e)} />
+                </div>
+                <input type="submit" className="btn btn-primary" value="Add Product" />
+            </form>
+            
+            {products && selectedProducts && <ProductsList items={selectedProducts} onDelete={onDeleteHandler}
+            history={props.history} />}
+            
         </section>
     )
 }
 
-export default UpdateProduct;
+export default UpdateSale;

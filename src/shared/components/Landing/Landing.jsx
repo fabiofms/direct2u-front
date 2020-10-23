@@ -9,7 +9,9 @@ export const Landing = () => {
         <section className="landing">
             <div className="dark-overlay">
                 <div className="landing-inner">
-                <h1 className="x-large">Direct2U</h1>
+                <h1 className="x-large">
+                    Direct2U
+                </h1>
                 <p className="lead">
                     A Direct Sales Management Plattaform
                 </p>

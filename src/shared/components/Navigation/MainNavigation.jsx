@@ -20,6 +20,9 @@ const MainNavigation = props => {
                 <li><Link to="/login">Login</Link></li>
             }
             {auth.isLoggedIn && 
+                <li><Link to="/clients">Clients</Link></li>
+            }
+            {auth.isLoggedIn && 
                 <li><Link to="/products">Products</Link></li>
             }
             {auth.isLoggedIn && 

@@ -27,6 +27,7 @@ export const Register = () => {
         e.preventDefault();
         setError(oldError => []);
         if(password !== password2) {
+            setError(oldError => [...oldError, 'Passwords do not match'])
             console.log('Passwords do not match');
         } else {
             const newUser = {

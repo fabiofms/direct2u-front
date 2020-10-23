@@ -5,23 +5,25 @@ import ProductsList from './ProductsList'
 export const NewSale = props => {
     const [products, setProducts] = useState(); // products from database
     const [selectedProducts, setSelectedProducts] = useState([]);
+    const [clients, setClients] = useState(); // clients from database
+    const [client, setClient] = useState([]);
     const [error, setError] = useState([]);
     const [isLoading, setIsLoading] = useState(false)
     const [formProduct, setFormProduct] = useState({
         quantity: '',
         product: ''
     });
-    const [formSale, setFormSale] = useState({
-        client: '',
-        email: ''
-    });
+    // const [formSale, setFormSale] = useState({
+    //     client: '',
+    //     email: ''
+    // });
 
     const { quantity, product } = formProduct
-    const { client, email } = formSale
+    // const { client, email } = formSale
 
     // Get products for user
     useEffect(() => {
-        const sendRequest = async () => {
+        const sendRequestProducts = async () => {
             setIsLoading(true);
             try {
                 const response = await fetch(
@@ -52,11 +54,45 @@ export const NewSale = props => {
             }
             
         };
-        sendRequest();
+
+        const sendRequestClients = async () => {
+            setIsLoading(true);
+            try {
+                const response = await fetch(
+                    process.env.REACT_APP_BACKEND_URL + '/api/client',
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-auth-token': localStorage.getItem('token')
+                        }
+                    }
+                );
+    
+                const responseData = await response.json();
+                
+                if(!response.ok) {
+                    throw new Error(responseData.msg)
+                }
+                
+                setClients(() => responseData);
+                if ( responseData.length > 0){
+                    setClient(responseData[0]._id)
+                }
+                setIsLoading(false);
+            } catch (err) {
+                setIsLoading(false);
+                setError(err.message);
+            }
+            
+        };
+
+        sendRequestProducts();
+        sendRequestClients();
     }, [])
 
 
-    const onChangeSale = e => setFormSale({...formSale, [e.target.name]: e.target.value})
+    const onChangeClient = e => setClient(e.target.value)
 
     const onChangeProduct = e => {
         setFormProduct({...formProduct, [e.target.name]: e.target.value})
@@ -66,7 +102,7 @@ export const NewSale = props => {
         e.preventDefault();
         setError(oldError => []);
         const newSaleData = {
-            client, email, products: selectedProducts
+            client, products: selectedProducts
         }
         try {
             setIsLoading(true)
@@ -128,21 +164,24 @@ export const NewSale = props => {
             <ErrElements errors = {error} />
 
             <form className="form" onSubmit={e => onSubmitSale(e)}>
-                <div className="form-group">
-                <input type="text" placeholder="Client Name" name="client"
-                    value={client} 
-                    onChange={e => onChangeSale(e)} />
-                </div>
-                <div className="form-group">
-                <input type="text" placeholder="Email" name="email"
-                    value={email} 
-                    onChange={e => onChangeSale(e)} />
-                </div>
-                <input type="submit" className="btn btn-primary" value="Add Sale" />
+                <input type="submit" className="btn btn-green" value="Add Sale" />
+                <p className="lead text-dark">Choose a Client:</p>
+                    {clients && <select
+                        name="client"
+                        value={client} 
+                        onChange={e => onChangeClient(e)}>
+                    {clients.map( client => {
+                        return (<option 
+                            key={client._id} 
+                            value={client._id}>
+                            {client.name}
+                        </option>)
+                    })}
+                </select>}
             </form>
 
             <form className="form" onSubmit={e => {onSubmitProduct(e)}}>
-                <p>Choose a Product:</p>
+                <p className="lead text-dark">Choose a Product:</p>
                     {products && <select
                         name="product"
                         value={product} 

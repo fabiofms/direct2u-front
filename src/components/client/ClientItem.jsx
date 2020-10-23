@@ -1,14 +1,14 @@
 import React from 'react';
 
-const SaleItem = props => {
+const ClientItem = props => {
     const handleEdit = () => {
-        props.history.push('/sale/' + props.id)
+        props.history.push('/client/' + props.id)
     }
 
     const handleDelete = async () => {
         try {
             const response = await fetch(
-                process.env.REACT_APP_BACKEND_URL + '/api/sale/' + props.id,
+                process.env.REACT_APP_BACKEND_URL + '/api/client/' + props.id,
                 {
                     method: 'DELETE',
                     headers: {
@@ -24,36 +24,9 @@ const SaleItem = props => {
             }
             
             props.onDelete(props.id);
-            
         } catch (err) {
             //setIsLoading(false);
             //setError(err.message);
-        }
-    }
-
-    const handleEmail = async () => {
-        try {
-            const response = await fetch(
-                process.env.REACT_APP_BACKEND_URL + '/api/sale/email/' + props.id,
-                {
-                    method: 'GET',
-                    headers: {
-                        'x-auth-token': localStorage.getItem('token')
-                    }
-                }
-            );
-
-            const responseData = await response.json();
-            
-            if(!response.ok) {
-                alert('Email not sent')
-                throw new Error(responseData.msg)
-            } else {
-                alert('Email sent!')
-            }
-
-        } catch (error) {
-            
         }
     }
 
@@ -61,11 +34,13 @@ const SaleItem = props => {
         <li>
             <div className="post bg-white p my-1">
                 <p>
-                    Date: {props.date} <br/>
-                    Client: {props.client.name} <br/>
-                    Items: {props.quantity} <br/>
-                    Price: R${props.price.toFixed(2)}
-                    
+                    Name: {props.name}
+                    <br />
+                    Email: {props.email}
+                    <br />
+                    Tel: {props.tel}
+                    <br />
+                    Address: {props.address}
                 </p>
                 <p>
                     <button      
@@ -80,12 +55,6 @@ const SaleItem = props => {
                         onClick={handleDelete}>
                         Delete
                     </button>
-                    <button      
-                        type="button"
-                        className="btn btn-dark"
-                        onClick={handleEmail}>
-                        Send Email
-                    </button>
                 </p>
                 
             </div>
@@ -93,4 +62,4 @@ const SaleItem = props => {
     );
 };
 
-export default SaleItem;
+export default ClientItem;

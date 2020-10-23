@@ -9,11 +9,18 @@ import NewSale from './components/sale/NewSale'
 import Sales from './components/sale/Sales'
 import UpdateSale from './components/sale/UpdateSale'
 
+import NewClient from './components/client/NewClient'
+import Clients from './components/client/Clients'
+import UpdateClient from './components/client/UpdateClient'
+
 import MainNavigation from './shared/components/Navigation/MainNavigation'
 import Landing from './shared/components/Landing/Landing'
+
 import Login from './components/auth/Login'
 import Register from './components/auth/Register'
+
 import { AuthContext } from './shared/context/auth-context'
+
 import './App.css';
 
 const App = () => {
@@ -38,6 +45,9 @@ const App = () => {
                     <Route path='/sale/new' exact component={NewSale} />
                     <Route path='/sales' exact component={Sales} />
                     <Route path='/sale/:saleId' exact component={UpdateSale} />
+                    <Route path='/client/new' exact component={NewClient} />
+                    <Route path='/clients' exact component={Clients} />
+                    <Route path='/client/:clientId' exact component={UpdateClient} />
                     <Route path='/' exact component={Landing} />
                     <Redirect to='/' />
                 </Switch>

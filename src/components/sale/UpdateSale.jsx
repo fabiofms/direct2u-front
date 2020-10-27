@@ -49,7 +49,7 @@ export const UpdateSale = props => {
                 setIsLoading(false);
 
                 // Set Selected products
-
+                // Get sale info
                 const saleResponse = await fetch(
                     `${process.env.REACT_APP_BACKEND_URL}/api/sale/${saleId}`,
                     {
@@ -61,14 +61,16 @@ export const UpdateSale = props => {
                   );
                   const saleResponseData = await saleResponse.json()
                   
+                  // Get sale selected products
                   let populatedProducts = []
                   saleResponseData.products.forEach( product =>{
+                    // Add product name to object
                     const name = responseData.filter(
                         p => p._id === product.product
                     )[0].name
+                    // Add complete value to populated products variable
                     populatedProducts.push({...product, name})
                   });
-
                   setSelectedProducts(old => {return [...old, ...populatedProducts]});
                   
                   console.log(responseData)
